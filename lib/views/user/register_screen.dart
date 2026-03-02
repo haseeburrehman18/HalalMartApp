@@ -15,8 +15,7 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen>
-    with SingleTickerProviderStateMixin {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -73,28 +72,23 @@ class _RegisterScreenState extends State<RegisterScreen>
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          /// Gradient Background
-          Container(
-            height: 280,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0BA360), Color(0xFF3CBA92)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0BA360), Color(0xFF3CBA92)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-
-          /// Main Content
-          SingleChildScrollView(
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                const SizedBox(height: 100),
 
-                /// Title
+                const SizedBox(height: 40),
+
+                /// TITLE
                 const Text(
                   "Create Account",
                   style: TextStyle(
@@ -108,12 +102,14 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                 const Text(
                   "Join HalalVerify Today",
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(
+                    color: Colors.white70,
+                  ),
                 ),
 
                 const SizedBox(height: 40),
 
-                /// Glass Card
+                /// CARD
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -121,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       )
@@ -131,6 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     key: _formKey,
                     child: Column(
                       children: [
+
                         InputField(
                           label: 'Full Name',
                           controller: _nameCtrl,
@@ -138,35 +135,46 @@ class _RegisterScreenState extends State<RegisterScreen>
                           validator: (v) =>
                           v!.isEmpty ? 'Enter name' : null,
                         ),
+
                         const SizedBox(height: 18),
+
                         InputField(
                           label: 'Email Address',
                           controller: _emailCtrl,
                           prefixIcon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType:
+                          TextInputType.emailAddress,
                           validator: (v) =>
                           v!.isEmpty ? 'Enter email' : null,
                         ),
+
                         const SizedBox(height: 18),
+
                         InputField(
                           label: 'Password',
                           controller: _passCtrl,
                           prefixIcon: Icons.lock_outline,
                           isPassword: true,
-                          onChanged: (v) => setState(() => _showPasswordStrength = true),
+                          onChanged: (v) =>
+                              setState(() =>
+                              _showPasswordStrength = true),
                           validator: (v) =>
-                          v!.length < 6 ? 'Min 6 characters' : null,
+                          v!.length < 6
+                              ? 'Min 6 characters'
+                              : null,
                         ),
 
-                        /// Password Strength
                         if (_showPasswordStrength) ...[
                           const SizedBox(height: 10),
                           LinearProgressIndicator(
-                            value: _passwordStrength(_passCtrl.text),
+                            value: _passwordStrength(
+                                _passCtrl.text),
                             minHeight: 6,
-                            borderRadius: BorderRadius.circular(10),
-                            backgroundColor: Colors.grey.shade200,
-                            color: _passwordStrength(_passCtrl.text) > 0.7
+                            backgroundColor:
+                            Colors.grey.shade200,
+                            color: _passwordStrength(
+                                _passCtrl.text) >
+                                0.7
                                 ? Colors.green
                                 : Colors.orange,
                           ),
@@ -174,39 +182,38 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                         const SizedBox(height: 24),
 
-                        /// Role Selector
+                        /// ROLE SELECTOR
                         Row(
                           children: [
                             _ModernRoleButton(
                               label: "Customer",
                               icon: Icons.person,
-                              selected:
-                              _selectedRole == AppConstants.roleUser,
-                              onTap: () => setState(
-                                      () => _selectedRole =
-                                      AppConstants.roleUser),
+                              selected: _selectedRole ==
+                                  AppConstants.roleUser,
+                              onTap: () => setState(() =>
+                              _selectedRole =
+                                  AppConstants.roleUser),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             _ModernRoleButton(
                               label: "Seller",
                               icon: Icons.storefront,
-                              selected:
-                              _selectedRole ==
+                              selected: _selectedRole ==
                                   AppConstants.roleSeller,
-                              onTap: () => setState(
-                                      () => _selectedRole =
-                                      AppConstants.roleSeller),
+                              onTap: () => setState(() =>
+                              _selectedRole =
+                                  AppConstants.roleSeller),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             _ModernRoleButton(
                               label: "Admin",
-                              icon: Icons.person,
-                              selected:
-                              _selectedRole ==
+                              icon:
+                              Icons.admin_panel_settings,
+                              selected: _selectedRole ==
                                   AppConstants.roleAdmin,
-                              onTap: () => setState(
-                                      () => _selectedRole =
-                                      AppConstants.roleAdmin),
+                              onTap: () => setState(() =>
+                              _selectedRole =
+                                  AppConstants.roleAdmin),
                             ),
                           ],
                         ),
@@ -222,16 +229,21 @@ class _RegisterScreenState extends State<RegisterScreen>
                         const SizedBox(height: 20),
 
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                          MainAxisAlignment.center,
                           children: [
-                            const Text("Already have an account? "),
+                            const Text(
+                                "Already have an account? "),
                             GestureDetector(
-                              onTap: () => Navigator.pop(context),
+                              onTap: () =>
+                                  Navigator.pop(context),
                               child: const Text(
                                 "Login",
                                 style: TextStyle(
-                                  color: Color(0xFF0BA360),
-                                  fontWeight: FontWeight.bold,
+                                  color:
+                                  Color(0xFF0BA360),
+                                  fontWeight:
+                                  FontWeight.bold,
                                 ),
                               ),
                             )
@@ -246,13 +258,13 @@ class _RegisterScreenState extends State<RegisterScreen>
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Modern Role Button
+/// Role Button
 class _ModernRoleButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -278,21 +290,29 @@ class _ModernRoleButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             gradient: selected
                 ? const LinearGradient(
-              colors: [Color(0xFF0BA360), Color(0xFF3CBA92)],
+              colors: [
+                Color(0xFF0BA360),
+                Color(0xFF3CBA92)
+              ],
             )
                 : null,
-            color: selected ? null : Colors.grey.shade100,
+            color:
+            selected ? null : Colors.grey.shade100,
           ),
           child: Column(
             children: [
               Icon(icon,
-                  color: selected ? Colors.white : Colors.grey),
+                  color: selected
+                      ? Colors.white
+                      : Colors.grey),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : Colors.grey,
+                  color: selected
+                      ? Colors.white
+                      : Colors.grey,
                 ),
               )
             ],
