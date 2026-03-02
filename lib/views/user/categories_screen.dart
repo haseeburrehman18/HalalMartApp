@@ -1,84 +1,182 @@
 // lib/views/user/categories_screen.dart
-// Screen 6 of 20
 
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/routes/app_routes.dart';
-import '../../core/constants/app_constants.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
 
   static const _categoryData = [
-    {'name': 'Meat & Poultry', 'icon': Icons.kebab_dining, 'count': 48},
-    {'name': 'Dairy', 'icon': Icons.local_drink, 'count': 32},
-    {'name': 'Snacks', 'icon': Icons.cookie, 'count': 67},
-    {'name': 'Beverages', 'icon': Icons.sports_bar, 'count': 41},
-    {'name': 'Frozen Foods', 'icon': Icons.ac_unit, 'count': 29},
-    {'name': 'Bakery', 'icon': Icons.bakery_dining, 'count': 55},
-    {'name': 'Grains & Cereals', 'icon': Icons.grain, 'count': 38},
-    {'name': 'Condiments', 'icon': Icons.lunch_dining, 'count': 23},
+    {
+      'name': 'Meat & Poultry',
+      'count': 48,
+      'image': 'assets/categories/meat.jpg'
+    },
+    {
+      'name': 'Dairy',
+      'count': 32,
+      'image': 'assets/categories/dairy.jpg'
+    },
+    {
+      'name': 'Snacks',
+      'count': 67,
+      'image': 'assets/categories/snacks.jpg'
+    },
+    {
+      'name': 'Beverages',
+      'count': 41,
+      'image': 'assets/categories/beverages.jpg'
+    },
+    {
+      'name': 'Frozen Foods',
+      'count': 29,
+      'image': 'assets/categories/frozen.jpg'
+    },
+    {
+      'name': 'Bakery',
+      'count': 55,
+      'image': 'assets/categories/bakery.jpg'
+    },
+    {
+      'name': 'Grains & Cereals',
+      'count': 38,
+      'image': 'assets/categories/grains.jpg'
+    },
+    {
+      'name': 'Condiments',
+      'count': 23,
+      'image': 'assets/categories/condiments.jpg'
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Categories')),
       backgroundColor: AppColors.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Browse by Category',
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+      appBar: AppBar(
+        title: const Text('Categories'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: GridView.builder(
+          itemCount: _categoryData.length,
+          gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: 0.95,
           ),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, mainAxisSpacing: 14, crossAxisSpacing: 14, childAspectRatio: 1.15,
+          itemBuilder: (_, i) {
+            final cat = _categoryData[i];
+
+            return GestureDetector(
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.productList,
+                arguments: cat['name'] as String,
               ),
-              itemCount: _categoryData.length,
-              itemBuilder: (_, i) {
-                final cat = _categoryData[i];
-                final colors = [
-                  [AppColors.primaryLight, AppColors.primary],
-                  [AppColors.accentLight, AppColors.accent],
-                  [const Color(0xFFE0F2FE), const Color(0xFF0284C7)],
-                  [const Color(0xFFFCE7F3), const Color(0xFFBE185D)],
-                  [const Color(0xFFF0FDF4), const Color(0xFF15803D)],
-                  [const Color(0xFFFFF7ED), const Color(0xFFEA580C)],
-                  [const Color(0xFFF5F3FF), const Color(0xFF7C3AED)],
-                  [const Color(0xFFF0FDFA), const Color(0xFF0F766E)],
-                ];
-                return GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.productList, arguments: cat['name'] as String),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: (colors[i][0] as Color),
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(cat['icon'] as IconData, color: colors[i][1] as Color, size: 36),
-                        const Spacer(),
-                        Text(cat['name'] as String,
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colors[i][1] as Color)),
-                        const SizedBox(height: 2),
-                        Text('${cat['count']} products',
-                            style: TextStyle(fontSize: 12, color: (colors[i][1] as Color).withOpacity(0.7))),
-                      ],
-                    ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    )
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Stack(
+                    children: [
+
+                      /// BACKGROUND IMAGE
+                      Positioned.fill(
+                        child: Image.asset(
+                          cat['image'] as String,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+
+                      /// DARK GRADIENT OVERLAY
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.2),
+                                Colors.black.withOpacity(0.75),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      /// HALAL BADGE
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius:
+                            BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'HALAL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      /// CATEGORY TEXT
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        right: 16,
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cat['name'] as String,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${cat['count']} products',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

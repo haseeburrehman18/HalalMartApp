@@ -18,8 +18,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameCtrl =
-  TextEditingController(text: 'Ahmed Ali');
+  final _nameCtrl = TextEditingController(text: 'Ahmed Ali');
   final _phoneCtrl =
   TextEditingController(text: '+60 12-345 6789');
   final _addressCtrl = TextEditingController(
@@ -36,16 +35,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
-  Future<void> _placeOrder(
-      CartProvider cart) async {
+  Future<void> _placeOrder(CartProvider cart) async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isPlacing = true);
 
-    await Future.delayed(
-        const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
 
-    /// FIXED: use clearCart() not clear()
     cart.clearCart();
 
     if (!mounted) return;
@@ -61,16 +57,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
-      appBar:
-      AppBar(title: const Text('Checkout')),
-      backgroundColor: AppColors.surface,
+      backgroundColor: const Color(0xffF6F8FB),
+      appBar: AppBar(
+        title: const Text('Checkout'),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
-        padding:
-        const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              /// HEADER
+              const Text(
+                "Complete Your Order",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 16),
 
               /// DELIVERY DETAILS
               _Section(
@@ -80,89 +90,74 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     InputField(
                       label: 'Full Name',
                       controller: _nameCtrl,
-                      prefixIcon:
-                      Icons.person_outline,
+                      prefixIcon: Icons.person_outline,
                       validator: (v) =>
-                      v!.isEmpty
-                          ? 'Required'
-                          : null,
+                      v!.isEmpty ? 'Required' : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     InputField(
                       label: 'Phone',
                       controller: _phoneCtrl,
-                      prefixIcon:
-                      Icons.phone_outlined,
+                      prefixIcon: Icons.phone_outlined,
                       keyboardType:
                       TextInputType.phone,
                       validator: (v) =>
-                      v!.isEmpty
-                          ? 'Required'
-                          : null,
+                      v!.isEmpty ? 'Required' : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     InputField(
                       label: 'Address',
                       controller: _addressCtrl,
-                      prefixIcon: Icons
-                          .location_on_outlined,
+                      prefixIcon:
+                      Icons.location_on_outlined,
                       maxLines: 2,
                       validator: (v) =>
-                      v!.isEmpty
-                          ? 'Required'
-                          : null,
+                      v!.isEmpty ? 'Required' : null,
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
 
               /// PAYMENT METHOD
               _Section(
                 title: 'Payment Method',
                 child: Column(
                   children: [
-                    'Online Banking',
-                    'Credit/Debit Card',
-                    'Cash on Delivery'
-                  ]
-                      .map(
-                        (method) =>
-                        RadioListTile<String>(
-                          value: method,
-                          groupValue:
-                          _paymentMethod,
-                          onChanged: (v) =>
-                              setState(() =>
-                              _paymentMethod =
-                              v!),
-                          title: Text(method),
-                          activeColor:
-                          AppColors.primary,
-                          contentPadding:
-                          EdgeInsets.zero,
-                        ),
-                  )
-                      .toList(),
+                    _paymentTile(
+                        "Online Banking",
+                        Icons.account_balance),
+                    _paymentTile(
+                        "Credit/Debit Card",
+                        Icons.credit_card),
+                    _paymentTile(
+                        "Cash on Delivery",
+                        Icons.payments_outlined),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
 
               /// ORDER SUMMARY
               _Section(
                 title: 'Order Summary',
                 child: Column(
                   children: [
-
-                    /// FIXED: access product properly
                     ...cart.items.map(
-                          (item) => Padding(
+                          (item) => Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 6),
                         padding:
-                        const EdgeInsets
-                            .symmetric(
-                            vertical: 4),
+                        const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color:
+                          const Color(0xffF3F6FA),
+                          borderRadius:
+                          BorderRadius.circular(
+                              10),
+                        ),
                         child: Row(
                           children: [
                             Expanded(
@@ -171,6 +166,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 style:
                                 const TextStyle(
                                   fontSize: 13,
+                                  fontWeight:
+                                  FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -178,8 +175,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               'x${item.quantity}',
                               style:
                               const TextStyle(
-                                color: AppColors
-                                    .textSecondary,
+                                color: Colors.grey,
                               ),
                             ),
                             const SizedBox(
@@ -189,8 +185,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               style:
                               const TextStyle(
                                 fontWeight:
-                                FontWeight
-                                    .w600,
+                                FontWeight.bold,
                               ),
                             ),
                           ],
@@ -198,16 +193,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ),
 
+                    const SizedBox(height: 12),
                     const Divider(),
+                    const SizedBox(height: 10),
 
-                    /// FIXED: use totalPrice
                     Row(
                       mainAxisAlignment:
                       MainAxisAlignment
                           .spaceBetween,
                       children: [
                         const Text(
-                          'Total',
+                          'Total Amount',
                           style: TextStyle(
                             fontWeight:
                             FontWeight.bold,
@@ -220,9 +216,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           const TextStyle(
                             fontWeight:
                             FontWeight.bold,
-                            fontSize: 18,
-                            color: AppColors
-                                .primaryDark,
+                            fontSize: 20,
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
@@ -231,7 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
 
               /// PLACE ORDER BUTTON
               CustomButton(
@@ -246,6 +241,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  ////////////////////////////////////////////////////////////
+  /// BEAUTIFUL PAYMENT TILE
+  ////////////////////////////////////////////////////////////
+
+  Widget _paymentTile(String title, IconData icon) {
+    return Container(
+      margin:
+      const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xffF3F6FA),
+        borderRadius:
+        BorderRadius.circular(12),
+      ),
+      child: RadioListTile<String>(
+        value: title,
+        groupValue: _paymentMethod,
+        onChanged: (v) =>
+            setState(() =>
+            _paymentMethod = v!),
+        title: Row(
+          children: [
+            Icon(icon,
+                size: 20,
+                color: AppColors.primary),
+            const SizedBox(width: 10),
+            Text(title),
+          ],
+        ),
+        activeColor: AppColors.primary,
+        contentPadding:
+        const EdgeInsets.symmetric(
+            horizontal: 12),
       ),
     );
   }
@@ -273,12 +304,14 @@ class _Section extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius:
-        BorderRadius.circular(14),
+        BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black
                 .withOpacity(0.05),
-            blurRadius: 6,
+            blurRadius: 10,
+            offset:
+            const Offset(0, 4),
           )
         ],
       ),
@@ -296,7 +329,7 @@ class _Section extends StatelessWidget {
               AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           child,
         ],
       ),
