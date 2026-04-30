@@ -16,6 +16,30 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
   String get role => _user?.role ?? '';
 
+  AuthProvider() {
+    // Optionally check for current user on initialization
+    _user = _authService.currentUser;
+  }
+
+  Future<UserModel?> restoreSession() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _user = await _authService.restoreCurrentUser();
+      _isLoading = false;
+      notifyListeners();
+      return _user;
+    } catch (e) {
+      _error = e.toString();
+      _user = null;
+      _isLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _error = null;
@@ -39,6 +63,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String role,
+    String? shopName,
   }) async {
     _isLoading = true;
     _error = null;
@@ -46,8 +71,30 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _user = await _authService.register(
-        name: name, email: email, password: password, role: role,
+        name: name,
+        email: email,
+        password: password,
+        role: role,
+        shopName: shopName,
       );
+      _isLoading = false;
+      notifyListeners();
+      return _user != null;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _user = await _authService.signInWithGoogle();
       _isLoading = false;
       notifyListeners();
       return _user != null;
@@ -63,5 +110,33 @@ class AuthProvider extends ChangeNotifier {
     await _authService.signOut();
     _user = null;
     notifyListeners();
+  }
+
+  Future<bool> updateProfile({
+    required String name,
+    required String email,
+    String? photoUrl,
+  }) async {
+    if (_user == null) return false;
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _user = await _authService.updateProfile(
+        uid: _user!.uid,
+        name: name,
+        email: email,
+        photoUrl: photoUrl,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return _user != null;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

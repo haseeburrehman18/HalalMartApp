@@ -1,30 +1,27 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:halal_verify/main.dart';
+import 'package:halal_verify/models/product_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const HalalVerifyApp());
+  test('ProductModel calculates discounted pricing correctly', () {
+    final product = ProductModel(
+      id: 'test-product',
+      sellerId: 'seller-1',
+      sellerName: 'Test Shop',
+      name: 'Test Product',
+      slug: 'test-product',
+      description: 'A product used for tests.',
+      price: 100,
+      discountPrice: 75,
+      category: 'Snacks',
+      imageUrl: '',
+      certStatus: CertificationStatus.approved,
+      createdAt: DateTime(2026),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(product.hasDiscount, isTrue);
+    expect(product.finalPrice, 75);
+    expect(product.discountPercent, 25);
+    expect(product.formattedPrice, r'$75.00');
+    expect(product.formattedOriginalPrice, r'$100.00');
   });
 }

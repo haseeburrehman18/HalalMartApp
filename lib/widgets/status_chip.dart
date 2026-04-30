@@ -1,5 +1,6 @@
 // lib/widgets/status_chip.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../core/theme/app_theme.dart';
 
 class StatusChip extends StatelessWidget {
@@ -51,6 +52,34 @@ class AppDrawer extends StatelessWidget {
     required this.items,
   });
 
+  Future<void> _showLogoutConfirmation(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Logout Confirmation'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('No', style: TextStyle(color: Colors.blue)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+                }
+              },
+              child: const Text('Yes', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -79,7 +108,7 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout, color: AppColors.error),
             title: const Text('Logout', style: TextStyle(color: AppColors.error)),
-            onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false),
+            onTap: () => _showLogoutConfirmation(context),
           ),
           const SizedBox(height: 16),
         ],

@@ -11,9 +11,16 @@ class OrderConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final orderIds = args is List
+        ? args.map((id) => id.toString()).toList()
+        : <String>[];
+    final orderId = orderIds.isNotEmpty
+        ? orderIds.join(', ')
+        : 'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -39,7 +46,7 @@ class OrderConfirmationScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 width: double.infinity,
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+                decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
                 child: Column(children: [
                   const Text('Order ID', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 6),

@@ -1,5 +1,5 @@
 name: halal_verify
-description: HalalVerify Marketplace - A halal-certified multi-vendor e-commerce app.
+description: Halal Mart - A halal-certified multi-vendor e-commerce app.
 
 publish_to: 'none'
 
@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   mobile_scanner: ^3.5.6
+  file_picker: ^8.0.0
   flutter:
     sdk: flutter
   provider: ^6.0.5
@@ -17,20 +18,46 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
-  firebase_storage: ^13.0.6
+  google_sign_in: ^6.2.1
+  http: ^1.6.0
   image_picker: ^1.0.7
   cached_network_image: ^3.4.1
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/icon.png"
+  remove_alpha_ios: true
+
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/products/chicken_breast.jpg
+    - assets/products/dates_mix.jpg
+    - assets/products/goat_milk.jpg
+    - assets/products/greek_yogurt.jpg
+    - assets/products/honey_crackers.jpg
+    - assets/products/lamb_chop.jpg
+    - assets/products/pita_bread.jpg
+    - assets/products/pomegranate_juice.jpg
+    - assets/products/rose_water.jpg
+    - assets/products/whole_grain_bread.jpg
     - assets/categories/meat.jpg
+    - assets/categories/dairy.jpg
+    - assets/categories/beverages.jpg
+    - assets/categories/condiments.jpg
+    - assets/categories/frozen.jpg
+    - assets/categories/grains.jpg
+    - assets/categories/snacks.jpg
+    - assets/categories/bakery.jpg

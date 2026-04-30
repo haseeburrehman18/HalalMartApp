@@ -17,24 +17,34 @@ import '../../views/user/cart_screen.dart';
 import '../../views/user/checkout_screen.dart';
 import '../../views/user/order_confirmation_screen.dart';
 import '../../views/user/user_profile_screen.dart';
+import '../../views/user/profile_feature_screens.dart';
 
 // Seller screens
 import '../../views/seller/seller_dashboard_screen.dart';
 import '../../views/seller/add_product_screen.dart';
 import '../../views/seller/seller_orders_screen.dart';
 import '../../views/seller/upload_certificate_screen.dart';
+import '../../views/seller/my_products_screen.dart';
 
 // Admin screens
 import '../../views/admin/admin_dashboard_screen.dart';
-import '../../views/admin/certificate_review_screen.dart';
 import '../../views/admin/product_approval_screen.dart';
+import '../../views/admin/approved_products_screen.dart';
 import '../../views/admin/user_management_screen.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final args = settings.arguments;
+    final name = settings.name ?? '';
 
-    switch (settings.name) {
+    if (name.startsWith('${AppRoutes.productDetail}/')) {
+      final productId = Uri.decodeComponent(
+        name.substring('${AppRoutes.productDetail}/'.length),
+      );
+      return _build(ProductDetailScreen(productId: productId), settings);
+    }
+
+    switch (name) {
       // ── Shared ──────────────────────────────────────────────────────
       case AppRoutes.splash:
         return _build(const SplashScreen(), settings);
@@ -62,6 +72,22 @@ class RouteGenerator {
         return _build(const OrderConfirmationScreen(), settings);
       case AppRoutes.userProfile:
         return _build(const UserProfileScreen(), settings);
+      case AppRoutes.editProfile:
+        return _build(const EditProfileScreen(), settings);
+      case AppRoutes.myOrders:
+        return _build(const MyOrdersScreen(), settings);
+      case AppRoutes.savedAddresses:
+        return _build(const SavedAddressesScreen(), settings);
+      case AppRoutes.paymentMethods:
+        return _build(const PaymentMethodsScreen(), settings);
+      case AppRoutes.wishlist:
+        return _build(const WishlistScreen(), settings);
+      case AppRoutes.notifications:
+        return _build(const NotificationsScreen(), settings);
+      case AppRoutes.helpSupport:
+        return _build(const HelpSupportScreen(), settings);
+      case AppRoutes.settings:
+        return _build(const SettingsScreen(), settings);
 
       // ── Seller ──────────────────────────────────────────────────────
       case AppRoutes.sellerDashboard:
@@ -72,14 +98,16 @@ class RouteGenerator {
         return _build(const SellerOrdersScreen(), settings);
       case AppRoutes.uploadCertificate:
         return _build(const UploadCertificateScreen(), settings);
+      case '/my-products':
+        return _build(const MyProductsScreen(), settings);
 
       // ── Admin ───────────────────────────────────────────────────────
       case AppRoutes.adminDashboard:
         return _build(const AdminDashboardScreen(), settings);
-      case AppRoutes.certificateReview:
-        return _build(const CertificateReviewScreen(), settings);
       case AppRoutes.productApproval:
         return _build(const ProductApprovalScreen(), settings);
+      case AppRoutes.approvedProducts:
+        return _build(const ApprovedProductsScreen(), settings);
       case AppRoutes.userManagement:
         return _build(const UserManagementScreen(), settings);
 

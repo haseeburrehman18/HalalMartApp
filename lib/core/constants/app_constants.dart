@@ -3,7 +3,7 @@
 
 class AppConstants {
   // App Info
-  static const String appName = 'HalalVerify';
+  static const String appName = 'Halal Mart';
   static const String appTagline = 'Certified Halal. Always.';
 
   // Padding & Spacing

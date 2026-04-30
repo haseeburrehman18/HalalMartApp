@@ -2,13 +2,14 @@
 // All named route definitions for the app
 
 class AppRoutes {
+
   // ── Shared ──────────────────────────────────────────────────────────
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
 
-  // ── User (12 screens) ───────────────────────────────────────────────
+  // ── User (Main) ─────────────────────────────────────────────────────
   static const String home = '/home';
   static const String categories = '/categories';
   static const String productList = '/product-list';
@@ -17,6 +18,16 @@ class AppRoutes {
   static const String checkout = '/checkout';
   static const String orderConfirmation = '/order-confirmation';
   static const String userProfile = '/user-profile';
+
+  // ── User Profile Features (NEW) ─────────────────────────────────────
+  static const String editProfile = '/edit-profile';
+  static const String myOrders = '/my-orders';
+  static const String savedAddresses = '/saved-addresses';
+  static const String paymentMethods = '/payment-methods';
+  static const String wishlist = '/wishlist';
+  static const String notifications = '/notifications';
+  static const String helpSupport = '/help-support';
+  static const String settings = '/settings';
 
   // ── Seller (4 screens) ──────────────────────────────────────────────
   static const String sellerDashboard = '/seller-dashboard';
@@ -28,5 +39,6 @@ class AppRoutes {
   static const String adminDashboard = '/admin-dashboard';
   static const String certificateReview = '/certificate-review';
   static const String productApproval = '/product-approval';
+  static const String approvedProducts = '/approved-products';
   static const String userManagement = '/user-management';
 }

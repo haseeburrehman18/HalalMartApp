@@ -1,12 +1,15 @@
 // lib/views/user/home_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/product_model.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/product_service.dart';
 import '../../widgets/product_card.dart';
 import 'categories_screen.dart';
 import 'cart_screen.dart';
@@ -32,11 +35,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    context.read<CartProvider>().bindUserCart(
+          context.watch<AuthProvider>().user?.uid,
+        );
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: IndexedStack(index: _idx, children: _tabs),
 
-      /// CENTER SCANNER BUTTON
+      /// SCANNER BUTTON
       floatingActionButtonLocation:
       FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Container(
@@ -49,8 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
-              blurRadius: 20,
+              color: AppColors.primary.withOpacity(0.5),
+              blurRadius: 25,
+              spreadRadius: 2,
             )
           ],
         ),
@@ -78,10 +86,12 @@ class _HomeScreenState extends State<HomeScreen> {
         shape: const CircularNotchedRectangle(),
         notchMargin: 8,
         elevation: 15,
+        padding: EdgeInsets.zero,
         child: Container(
           height: 72,
+          width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             border: Border(
               top: BorderSide(color: AppColors.border),
             ),
@@ -126,13 +136,161 @@ class _HomeScreenState extends State<HomeScreen> {
 
 /// ================= HOME TAB =================
 
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  final TextEditingController _searchController = TextEditingController();
+  final ProductService _productService = ProductService();
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+  String _sortBy = 'Latest';
+  bool _discountOnly = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _showFilters() {
+    String category = _selectedCategory;
+    String sortBy = _sortBy;
+    bool discountOnly = _discountOnly;
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Filter Products',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: category,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      prefixIcon: Icon(Icons.category_outlined),
+                    ),
+                    items: ['All', ...AppConstants.categories]
+                        .map((item) =>
+                            DropdownMenuItem(value: item, child: Text(item)))
+                        .toList(),
+                    onChanged: (value) =>
+                        setSheetState(() => category = value ?? 'All'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: sortBy,
+                    decoration: const InputDecoration(
+                      labelText: 'Sort by',
+                      prefixIcon: Icon(Icons.sort),
+                    ),
+                    items: const [
+                      'Latest',
+                      'Price: Low to High',
+                      'Price: High to Low',
+                      'Rating',
+                    ]
+                        .map((item) =>
+                            DropdownMenuItem(value: item, child: Text(item)))
+                        .toList(),
+                    onChanged: (value) =>
+                        setSheetState(() => sortBy = value ?? 'Latest'),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Discounted products only'),
+                    value: discountOnly,
+                    onChanged: (value) =>
+                        setSheetState(() => discountOnly = value),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedCategory = 'All';
+                              _sortBy = 'Latest';
+                              _discountOnly = false;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Reset'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedCategory = category;
+                              _sortBy = sortBy;
+                              _discountOnly = discountOnly;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Apply'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<ProductModel> _applyFilters(List<ProductModel> products) {
+    final query = _searchQuery.trim().toLowerCase();
+    final filtered = products.where((p) {
+      final matchesSearch = query.isEmpty ||
+          p.name.toLowerCase().contains(query) ||
+          p.category.toLowerCase().contains(query) ||
+          p.description.toLowerCase().contains(query);
+      final matchesCategory =
+          _selectedCategory == 'All' || p.category == _selectedCategory;
+      final matchesDiscount = !_discountOnly || p.hasDiscount;
+      return matchesSearch && matchesCategory && matchesDiscount;
+    }).toList();
+
+    switch (_sortBy) {
+      case 'Price: Low to High':
+        filtered.sort((a, b) => a.finalPrice.compareTo(b.finalPrice));
+        break;
+      case 'Price: High to Low':
+        filtered.sort((a, b) => b.finalPrice.compareTo(a.finalPrice));
+        break;
+      case 'Rating':
+        filtered.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      default:
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final cart = context.read<CartProvider>();
-    final products = ProductModel.mockProducts;
-
+    final theme = Theme.of(context);
     return CustomScrollView(
       slivers: [
 
@@ -146,11 +304,16 @@ class _HomeTab extends StatelessWidget {
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Assalamu Alaikum 👋",
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
+                  AnimatedOpacity(
+                    duration:
+                    const Duration(milliseconds: 800),
+                    opacity: 1,
+                    child: Text(
+                      "Hi👋",
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                   Text(
@@ -172,23 +335,31 @@ class _HomeTab extends StatelessWidget {
             padding:
             const EdgeInsets.fromLTRB(
                 20, 24, 20, 0),
-            child: Container(
+            child: AnimatedContainer(
+              duration:
+              const Duration(milliseconds: 400),
               height: 52,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius:
                 BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withOpacity(0.05),
-                    blurRadius: 10,
+                    color: AppColors.primary
+                        .withOpacity(0.08),
+                    blurRadius: 15,
                   )
                 ],
-                border: Border.all(
-                    color: AppColors.border),
+                border:
+                Border.all(color: AppColors.border),
               ),
               child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
                 decoration: InputDecoration(
                   hintText:
                   "Search halal products...",
@@ -199,21 +370,25 @@ class _HomeTab extends StatelessWidget {
                   ),
                   prefixIcon: const Icon(
                     Icons.search_rounded,
-                    color: Colors.grey,
+                    color: AppColors.textSecondary,
                   ),
-                  suffixIcon: Container(
-                    margin:
-                    const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius:
-                      BorderRadius
-                          .circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.tune_rounded,
-                      color: Colors.white,
-                      size: 18,
+                  suffixIcon: InkWell(
+                    onTap: _showFilters,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      margin:
+                      const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius:
+                        BorderRadius
+                            .circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.tune_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                   border: InputBorder.none,
@@ -222,6 +397,25 @@ class _HomeTab extends StatelessWidget {
             ),
           ),
         ),
+
+        if (_selectedCategory != 'All' || _discountOnly || _sortBy != 'Latest')
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (_selectedCategory != 'All')
+                    Chip(label: Text(_selectedCategory)),
+                  if (_discountOnly)
+                    const Chip(label: Text('Discounts')),
+                  if (_sortBy != 'Latest')
+                    Chip(label: Text(_sortBy)),
+                ],
+              ),
+            ),
+          ),
 
         /// FEATURED HEADER
         SliverToBoxAdapter(
@@ -241,42 +435,73 @@ class _HomeTab extends StatelessWidget {
           ),
         ),
 
-        /// PRODUCT GRID
-        SliverPadding(
-          padding:
-          const EdgeInsets.symmetric(
-              horizontal: 20),
-          sliver: SliverGrid(
-            gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 0.65,
-            ),
-            delegate:
-            SliverChildBuilderDelegate(
-                  (_, i) => ProductCard(
-                product: products[i],
-                onAddToCart: () {
-                  cart.addProduct(
-                      products[i]);
-                  ScaffoldMessenger.of(
-                      context)
-                      .showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          '${products[i].name} added'),
-                      backgroundColor:
-                      AppColors.primary,
+        StreamBuilder<List<ProductModel>>(
+          stream: _productService.getApprovedProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Could not load products: ${snapshot.error}',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ),
+              );
+            }
+
+            final filteredProducts = _applyFilters(snapshot.data ?? []);
+
+            if (filteredProducts.isEmpty) {
+              return const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: Center(
+                    child: Text(
+                      'No approved products found.',
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
-                  );
-                },
+                  ),
+                ),
+              );
+            }
+
+            return SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 0.56,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => ProductCard(
+                    product: filteredProducts[i],
+                    onAddToCart: () {
+                      cart.addProduct(filteredProducts[i]);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${filteredProducts[i].name} added'),
+                          backgroundColor: AppColors.primary,
+                        ),
+                      );
+                    },
+                  ),
+                  childCount: filteredProducts.length,
+                ),
               ),
-              childCount:
-              products.length,
-            ),
-          ),
+            );
+          },
         ),
 
         const SliverToBoxAdapter(
@@ -288,7 +513,7 @@ class _HomeTab extends StatelessWidget {
 
 /// ================= NAV ITEM =================
 
-class _NavItem extends StatelessWidget {
+class _NavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool active;
@@ -304,22 +529,63 @@ class _NavItem extends StatelessWidget {
   });
 
   @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration:
+      const Duration(milliseconds: 200),
+    );
+
+    _scale = Tween<double>(begin: 1, end: 1.2)
+        .animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant _NavItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.active) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final color =
-    active ? AppColors.primary : Colors.grey;
+    widget.active ? AppColors.primary : Colors.grey;
 
     return Expanded(
       child: GestureDetector(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Column(
           mainAxisAlignment:
           MainAxisAlignment.center,
           children: [
             Stack(
               children: [
-                Icon(icon,
-                    color: color, size: 24),
-                if (badgeCount > 0)
+                ScaleTransition(
+                  scale: _scale,
+                  child: Icon(
+                    widget.icon,
+                    color: color,
+                    size: 24,
+                  ),
+                ),
+                if (widget.badgeCount > 0)
                   Positioned(
                     right: -6,
                     top: -4,
@@ -332,9 +598,9 @@ class _NavItem extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Text(
-                        badgeCount > 9
+                        widget.badgeCount > 9
                             ? "9+"
-                            : badgeCount
+                            : widget.badgeCount
                             .toString(),
                         style:
                         const TextStyle(
@@ -350,10 +616,10 @@ class _NavItem extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              label,
+              widget.label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: active
+                fontWeight: widget.active
                     ? FontWeight.w600
                     : FontWeight.w400,
                 color: color,
@@ -363,6 +629,12 @@ class _NavItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
 

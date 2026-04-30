@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:halal_verify/views/user/checkout_screen.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 
 class CartScreen extends StatelessWidget {
@@ -11,9 +12,11 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    cart.bindUserCart(context.watch<AuthProvider>().user?.uid);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Your Cart"),
         backgroundColor: AppColors.primary,
@@ -27,7 +30,7 @@ class CartScreen extends StatelessWidget {
           /// CART ITEMS
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               itemCount: cart.items.length,
               itemBuilder: (_, i) {
                 final item = cart.items[i];
@@ -61,7 +64,7 @@ class _CartItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -71,19 +74,35 @@ class _CartItemCard extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
 
           /// PRODUCT IMAGE
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: Image.network(
-              item.product.imageUrl,
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Container(width: 70, height: 70, color: Colors.grey.shade200),
-            ),
+            child: item.product.imageUrl.startsWith('http')
+                ? Image.network(
+                    item.product.imageUrl,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 70,
+                      height: 70,
+                      color: Colors.grey.shade200,
+                    ),
+                  )
+                : Image.asset(
+                    item.product.imageUrl,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 70,
+                      height: 70,
+                      color: Colors.grey.shade200,
+                    ),
+                  ),
           ),
 
           const SizedBox(width: 14),
@@ -95,18 +114,38 @@ class _CartItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.dmSans(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  "\$${item.product.price.toStringAsFixed(2)}",
-                  style: GoogleFonts.dmSans(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      item.product.formattedPrice,
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (item.product.hasDiscount) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          item.product.formattedOriginalPrice,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.dmSans(
+                            color: AppColors.textLight,
+                            fontSize: 12,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 10),
 
@@ -139,18 +178,23 @@ class _CartItemCard extends StatelessWidget {
           ),
 
           /// REMOVE BUTTON
-          IconButton(
-            onPressed: () {
-              cart.removeProduct(item.product.id);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Item removed"),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-            icon: const Icon(Icons.delete_outline),
-            color: Colors.red,
+          SizedBox(
+            width: 42,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              onPressed: () {
+                cart.removeProduct(item.product.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Item removed"),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.delete_outline),
+              color: Colors.red,
+            ),
           )
         ],
       ),
@@ -204,15 +248,18 @@ class _CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius:
-        BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius:
+          const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
 
           /// TOTAL ROW
           Row(
@@ -261,7 +308,8 @@ class _CartSummary extends StatelessWidget {
               ),
             ),
           )
-        ],
+          ],
+        ),
       ),
     );
   }

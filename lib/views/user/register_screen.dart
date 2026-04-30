@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _shopNameCtrl = TextEditingController();
 
   String _selectedRole = AppConstants.roleUser;
   bool _showPasswordStrength = false;
@@ -29,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _shopNameCtrl.dispose();
     super.dispose();
   }
 
@@ -51,6 +53,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
       role: _selectedRole,
+      shopName: _selectedRole == AppConstants.roleSeller
+          ? _shopNameCtrl.text.trim()
+          : null,
     );
 
     if (!mounted) return;
@@ -73,6 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       body: Container(
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0BA360), Color(0xFF3CBA92)],
@@ -101,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 6),
 
                 const Text(
-                  "Join HalalVerify Today",
+                  "Join Halal Mart Today",
                   style: TextStyle(
                     color: Colors.white70,
                   ),
@@ -129,13 +135,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
 
                         InputField(
-                          label: 'Full Name',
+                          label: _selectedRole == AppConstants.roleSeller
+                              ? 'Seller Name'
+                              : 'Full Name',
                           controller: _nameCtrl,
                           prefixIcon: Icons.person_outline,
-                          validator: (v) =>
-                          v!.isEmpty ? 'Enter name' : null,
+                          validator: (v) => v!.isEmpty
+                              ? _selectedRole == AppConstants.roleSeller
+                                  ? 'Enter seller name'
+                                  : 'Enter name'
+                              : null,
                         ),
 
+
+                        if (_selectedRole == AppConstants.roleSeller) ...[
+                          const SizedBox(height: 18),
+                          InputField(
+                            label: 'Store Name',
+                            controller: _shopNameCtrl,
+                            prefixIcon: Icons.storefront_outlined,
+                            validator: (v) {
+                              if (_selectedRole != AppConstants.roleSeller) {
+                                return null;
+                              }
+                              return v == null || v.trim().isEmpty
+                                  ? 'Enter store name'
+                                  : null;
+                            },
+                          ),
+                        ],
                         const SizedBox(height: 18),
 
                         InputField(
@@ -217,6 +245,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ],
                         ),
+
+
 
                         const SizedBox(height: 30),
 

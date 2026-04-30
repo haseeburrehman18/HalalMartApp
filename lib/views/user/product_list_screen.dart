@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/product_model.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/product_service.dart';
 import '../../widgets/product_card.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class ProductListScreen extends StatefulWidget {
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
+  final ProductService _productService = ProductService();
   String _sortBy = 'Latest';
   final _sorts = [
     'Latest',
@@ -25,19 +27,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
     'Rating'
   ];
 
-  List<ProductModel> get _products {
-    var list = widget.category == 'All'
-        ? List<ProductModel>.from(ProductModel.mockProducts)
-        : ProductModel.mockProducts
-        .where((p) => p.category == widget.category)
-        .toList();
-
+  List<ProductModel> _sortProducts(List<ProductModel> products) {
+    final list = widget.category == 'All'
+        ? List<ProductModel>.from(products)
+        : products.where((p) => p.category == widget.category).toList();
     switch (_sortBy) {
       case 'Price: Low to High':
-        list.sort((a, b) => a.price.compareTo(b.price));
+        list.sort((a, b) => a.finalPrice.compareTo(b.finalPrice));
         break;
       case 'Price: High to Low':
-        list.sort((a, b) => b.price.compareTo(a.price));
+        list.sort((a, b) => b.finalPrice.compareTo(a.finalPrice));
         break;
       case 'Rating':
         list.sort((a, b) => b.rating.compareTo(a.rating));
@@ -51,10 +50,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.read<CartProvider>();
-    final products = _products;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
 
       /// PREMIUM GRADIENT APPBAR
       appBar: AppBar(
@@ -78,8 +77,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
         ),
       ),
 
-      body: Column(
-        children: [
+      body: StreamBuilder<List<ProductModel>>(
+        stream: _productService.getApprovedProducts(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Could not load products: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            );
+          }
+
+          final products = _sortProducts(snapshot.data ?? []);
+
+          return Column(
+            children: [
 
           /// FILTER / SORT CARD
           Container(
@@ -87,7 +108,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             padding: const EdgeInsets.symmetric(
                 horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius:
               BorderRadius.circular(18),
               boxShadow: [
@@ -144,8 +165,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       fontSize: 13,
                       fontWeight:
                       FontWeight.w500,
-                      color:
-                      Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                     items: _sorts
                         .map((s) =>
@@ -231,7 +251,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
                 childAspectRatio:
-                0.72,
+                0.56,
               ),
               itemCount:
               products.length,
@@ -286,7 +306,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
               },
             ),
           ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

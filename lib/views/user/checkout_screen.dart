@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/routes/app_routes.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/order_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/input_field.dart';
 
@@ -17,12 +19,11 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
+  final OrderService _orderService = OrderService();
 
-  final _nameCtrl = TextEditingController(text: 'Ahmed Ali');
-  final _phoneCtrl =
-  TextEditingController(text: '+60 12-345 6789');
-  final _addressCtrl = TextEditingController(
-      text: '123, Jalan Halal, Kuala Lumpur');
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
 
   String _paymentMethod = 'Online Banking';
   bool _isPlacing = false;
@@ -37,24 +38,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _placeOrder(CartProvider cart) async {
     if (!_formKey.currentState!.validate()) return;
+    if (cart.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your cart is empty')),
+      );
+      return;
+    }
+
+    final user = context.read<AuthProvider>().user;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login before checkout')),
+      );
+      return;
+    }
 
     setState(() => _isPlacing = true);
 
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final orderIds = await _orderService.placeOrder(
+        user: user,
+        items: List.of(cart.items),
+        customerName: _nameCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim(),
+        deliveryAddress: _addressCtrl.text.trim(),
+        paymentMethod: _paymentMethod,
+      );
 
-    cart.clearCart();
+      await cart.clearCartFromDatabase();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() => _isPlacing = false);
+      setState(() => _isPlacing = false);
 
-    Navigator.pushReplacementNamed(
-        context, AppRoutes.orderConfirmation);
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.orderConfirmation,
+        arguments: orderIds,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isPlacing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not place order: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final user = context.watch<AuthProvider>().user;
+    if (_nameCtrl.text.isEmpty && user != null) {
+      _nameCtrl.text = user.name;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xffF6F8FB),

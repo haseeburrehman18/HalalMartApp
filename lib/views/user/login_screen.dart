@@ -38,35 +38,47 @@ class _LoginScreenState extends State<LoginScreen> {
     await auth.login(_emailCtrl.text.trim(), _passCtrl.text);
 
     // Debug: print auth result and role
-    // Remove or guard these prints in production
     debugPrint('Login attempt for ${_emailCtrl.text.trim()}, success=$success, role=${auth.role}, error=${auth.error}');
 
     if (!mounted) return;
 
     if (success) {
-      final role = auth.role;
-      if (role == AppConstants.roleAdmin) {
-        Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
-      } else if (role == AppConstants.roleSeller) {
-        Navigator.pushReplacementNamed(context, AppRoutes.sellerDashboard);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      }
+      _navigateBasedOnRole(auth.role);
     } else {
-      // Show error, but in debug mode also allow jumping to home to test UI.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(auth.error ?? "Login failed"),
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
 
-      assert(() {
-        // In debug, if login failed, still navigate to home so developer can verify UI
-        debugPrint('Debug fallback: navigating to home to test UI');
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-        return true;
-      }());
+  Future<void> _googleSignIn() async {
+    final auth = context.read<AuthProvider>();
+    final success = await auth.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      _navigateBasedOnRole(auth.role);
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.error!),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _navigateBasedOnRole(String role) {
+    if (role == AppConstants.roleAdmin) {
+      Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+    } else if (role == AppConstants.roleSeller) {
+      Navigator.pushReplacementNamed(context, AppRoutes.sellerDashboard);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     }
   }
 
@@ -271,7 +283,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   _socialButton(
                       icon: Icons.g_mobiledata,
-                      text: "Login with Google"),
+                      text: "Login with Google",
+                      onTap: isLoading ? null : _googleSignIn,
+                  ),
 
                   const SizedBox(height: 12),
 
@@ -347,25 +361,30 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _socialButton({
     required IconData icon,
     required String text,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border:
-        Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment:
-        MainAxisAlignment.center,
-        children: [
-          Icon(icon),
-          const SizedBox(width: 8),
-          Text(text,
-              style: GoogleFonts.poppins()),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border:
+          Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisAlignment:
+          MainAxisAlignment.center,
+          children: [
+            Icon(icon),
+            const SizedBox(width: 8),
+            Text(text,
+                style: GoogleFonts.poppins()),
+          ],
+        ),
       ),
     );
   }

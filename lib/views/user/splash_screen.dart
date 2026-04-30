@@ -3,7 +3,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/routes/app_routes.dart';
+import '../../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -43,11 +46,30 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 3200), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
-      }
-    });
+    _routeAfterAuthCheck();
+  }
+
+  Future<void> _routeAfterAuthCheck() async {
+    final auth = context.read<AuthProvider>();
+    await Future.wait([
+      auth.restoreSession(),
+      Future<void>.delayed(const Duration(milliseconds: 1700)),
+    ]);
+
+    if (!mounted) return;
+
+    final user = auth.user;
+    if (user == null) {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      return;
+    }
+
+    final route = switch (user.role) {
+      AppConstants.roleAdmin => AppRoutes.adminDashboard,
+      AppConstants.roleSeller => AppRoutes.sellerDashboard,
+      _ => AppRoutes.home,
+    };
+    Navigator.pushReplacementNamed(context, route);
   }
 
   @override
